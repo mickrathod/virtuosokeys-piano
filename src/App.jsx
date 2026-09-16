@@ -19,9 +19,10 @@ export function App() {
 
   // App UI State
   const [isStarted, setIsStarted] = useState(false);
-  const [activeTab, setActiveTab] = useState('songbook'); // 'songbook', 'academy', 'freeplay'
+  const [activeTab, setActiveTab] = useState('normal'); // 'normal', 'songbook', 'academy', 'freeplay'
   const [startOctave, setStartOctave] = useState(3); // C3 to B5
-  const [labelsMode, setLabelsMode] = useState('notes'); // 'notes', 'keys', 'sargam', 'none'
+  const [keyWidthMode, setKeyWidthMode] = useState('grand'); // 'grand' (wide 3 octaves), 'wide' (4 octaves), 'full' (88 keys)
+  const [labelsMode, setLabelsMode] = useState('none'); // 'notes', 'keys', 'sargam', 'none'
   const [sustainPedal, setSustainPedal] = useState(false);
   const [preset, setPreset] = useState('grand');
   const [volume, setVolume] = useState(0.85);
@@ -29,6 +30,20 @@ export function App() {
 
   // Active Keys (pressed set)
   const [activePressedMidi, setActivePressedMidi] = useState(new Set());
+
+  // Auto-unlock audio on very first user interaction
+  useEffect(() => {
+    const handleFirstGesture = () => {
+      synth.ensureContext();
+      setIsStarted(true);
+    };
+    window.addEventListener('pointerdown', handleFirstGesture, { once: true });
+    window.addEventListener('keydown', handleFirstGesture, { once: true });
+    return () => {
+      window.removeEventListener('pointerdown', handleFirstGesture);
+      window.removeEventListener('keydown', handleFirstGesture);
+    };
+  }, [synth]);
 
   // Song Book State
   const [activeSongIndex, setActiveSongIndex] = useState(0);
@@ -253,154 +268,216 @@ export function App() {
   };
 
   return (
-    <div className="piano-app-root">
-      {!isStarted && <StartOverlay onStart={handleStart} />}
+    <div className={`piano-app-root ${activeTab === 'normal' ? 'real-piano-fullscreen-active' : ''}`}>
+      {activeTab !== 'normal' && !isStarted && <StartOverlay onStart={handleStart} />}
 
-      {/* Main Header */}
-      <header className="piano-header">
-        <div className="piano-brand-badge">STEINWAY & SONS CONCERT HARMONY MODEL</div>
-        <h1 className="piano-title">VirtuosoKeys Piano Academy</h1>
-        <p className="piano-subtitle">
-          Play along with <strong>Tum Hi Ho</strong>, <strong>Tum Mere Ho</strong>, Kal Ho Naa Ho & Master Real Piano
-        </p>
-
-        {/* View Mode Switcher */}
-        <div className="view-mode-tabs">
-          <button
-            className={`mode-tab-btn normal-piano-tab-btn ${activeTab === 'normal' ? 'active' : ''}`}
-            onClick={() => {
-              setActiveTab('normal');
-              setLabelsMode('none');
-              setIsPlaying(false);
-            }}
-          >
-            🎹 Normal Piano (Direct Play)
-          </button>
-          <button
-            className={`mode-tab-btn ${activeTab === 'songbook' ? 'active' : ''}`}
-            onClick={() => {
-              setActiveTab('songbook');
-              if (labelsMode === 'none') setLabelsMode('notes');
-            }}
-          >
-            🎼 Synthesia Song Book (Tum Hi Ho)
-          </button>
-          <button
-            className={`mode-tab-btn ${activeTab === 'academy' ? 'active' : ''}`}
-            onClick={() => {
-              setActiveTab('academy');
-              if (labelsMode === 'none') setLabelsMode('notes');
-            }}
-          >
-            🎓 Piano Academy & Lessons
-          </button>
-          <button
-            className={`mode-tab-btn ${activeTab === 'freeplay' ? 'active' : ''}`}
-            onClick={() => setActiveTab('freeplay')}
-          >
-            🎛️ Studio Synth & MIDI
-          </button>
-        </div>
-      </header>
-
-      {/* Studio Controls Strip */}
-      <StudioControls
-        sustainPedal={sustainPedal}
-        onToggleSustain={handleToggleSustain}
-        preset={preset}
-        onPresetChange={handlePresetChange}
-        labelsMode={labelsMode}
-        onLabelsModeChange={setLabelsMode}
-        volume={volume}
-        onVolumeChange={handleVolumeChange}
-        isMidiConnected={isMidiConnected}
-      />
-
-      {/* Piano Grand Console Chassis */}
-      <main className="piano-console-chassis">
-        {/* Chassis Top Bar: Spectrum Visualizer & Metronome */}
-        <div className="console-hud-bar">
-          <div className="active-key-readout">
-            <span className="hud-label">ACTIVE RESONANCE:</span>
-            <span className="hud-value">
-              {activePressedMidi.size > 0
-                ? Array.from(activePressedMidi).map((m) => `MIDI ${m}`).join(', ')
-                : 'Grand Soundboard Idle'}
-            </span>
-          </div>
-
-          <SoundVisualizer synth={synth} />
-        </div>
-
-        {/* Mode 1: Synthesia Falling Notes Screen */}
-        {activeTab === 'songbook' && (
-          <div className="synthesia-stage">
-            <FallingNotesCanvas
-              song={activeSong}
-              currentTimeMs={currentTimeMs}
-              isPlaying={isPlaying}
-              activeVisibleMidiRange={{
-                startMidi: (startOctave + 1) * 12,
-                endMidi: (startOctave + 1) * 12 + 35
+      {activeTab === 'normal' ? (
+        /* PURE REAL PIANO FULLSCREEN MODE - ZERO TEXT, 100% REAL CONCERT GRAND */
+        <div className="pure-real-piano-fullscreen-stage">
+          {/* Subtle Floating Controls: Auto-dims, zero text, icons only */}
+          <div className="pure-piano-floating-pill">
+            <button
+              className={`pure-pill-btn pedal ${sustainPedal ? 'active' : ''}`}
+              onClick={handleToggleSustain}
+              title="Sustain Pedal [Spacebar]"
+            >
+              {sustainPedal ? '🛑' : '🦶'}
+            </button>
+            <button
+              className="pure-pill-btn fullscreen"
+              onClick={() => {
+                if (!document.fullscreenElement) {
+                  document.documentElement.requestFullscreen().catch(() => {});
+                } else {
+                  document.exitFullscreen().catch(() => {});
+                }
               }}
-              onSeekTime={handleSeekTime}
-            />
-
-            <SongPlayer
-              activeSongIndex={activeSongIndex}
-              onSelectSong={handleSelectSong}
-              isPlaying={isPlaying}
-              onTogglePlay={handleTogglePlaySong}
-              onRestartSong={handleRestartSong}
-              playbackSpeed={playbackSpeed}
-              onChangePlaybackSpeed={setPlaybackSpeed}
-              waitForKeyMode={waitForKeyMode}
-              onToggleWaitForKey={() => setWaitForKeyMode(!waitForKeyMode)}
-              currentTimeMs={currentTimeMs}
-              currentLyric={currentLyric}
-            />
+              title="Full Screen (F11)"
+            >
+              ⛶
+            </button>
+            <button
+              className="pure-pill-btn width-toggle"
+              onClick={() => {
+                setKeyWidthMode((prev) => (prev === 'grand' ? 'wide' : prev === 'wide' ? 'full' : 'grand'));
+              }}
+              title="Toggle Key Width (Wide / Full)"
+            >
+              ↔️
+            </button>
+            <button
+              className="pure-pill-btn exit"
+              onClick={() => {
+                setActiveTab('songbook');
+                setLabelsMode('notes');
+              }}
+              title="Academy & Songbook"
+            >
+              🎼
+            </button>
           </div>
-        )}
 
-        {/* Interactive 3D Grand Piano Keyboard Bed */}
-        <PianoKeyboard
-          onStartNote={handleStartNote}
-          onStopNote={handleStopNote}
-          activePressedMidi={activePressedMidi}
-          startOctave={startOctave}
-          octaveCount={3}
-          showLabels={labelsMode}
-          onShiftOctave={setStartOctave}
-          isNormalMode={activeTab === 'normal'}
-        />
-
-        {/* Mode 2: Piano Academy Interactive Lessons */}
-        {activeTab === 'academy' && (
-          <PianoAcademy
-            onPlayMidis={handlePlayMidis}
-            onHighlightMidis={handleHighlightMidis}
+          {/* The Authentic Steinway Real Piano Keyboard (Zero Text) */}
+          <PianoKeyboard
+            onStartNote={handleStartNote}
+            onStopNote={handleStopNote}
+            activePressedMidi={activePressedMidi}
+            startOctave={startOctave}
+            octaveCount={keyWidthMode === 'grand' ? 3 : 4}
+            showLabels="none"
+            onShiftOctave={setStartOctave}
+            isNormalMode={true}
+            full88Mode={keyWidthMode === 'full'}
           />
-        )}
-      </main>
+        </div>
+      ) : (
+        /* Standard Academy & Studio View */
+        <>
+          {/* Main Header */}
+          <header className="piano-header">
+            <div className="piano-brand-badge">STEINWAY &amp; SONS CONCERT HARMONY MODEL</div>
+            <h1 className="piano-title">VirtuosoKeys Piano Academy</h1>
+            <p className="piano-subtitle">
+              Play along with <strong>Tum Hi Ho</strong>, <strong>Tum Mere Ho</strong>, Kal Ho Naa Ho &amp; Master Real Piano
+            </p>
 
-      {/* Footer Info (Hidden in clean Normal Piano mode for zero distraction) */}
-      {activeTab !== 'normal' && (
-        <footer className="piano-footer">
-          <div className="footer-guide-row">
-            <div className="guide-chip">
-              <kbd>A</kbd>&ndash;<kbd>L</kbd> <span>White Keys (C4 to D5)</span>
+            {/* View Mode Switcher */}
+            <div className="view-mode-tabs">
+              <button
+                className={`mode-tab-btn normal-piano-tab-btn ${activeTab === 'normal' ? 'active' : ''}`}
+                onClick={() => {
+                  setActiveTab('normal');
+                  setLabelsMode('none');
+                  setIsPlaying(false);
+                }}
+              >
+                🎹 Normal Piano (Direct Play)
+              </button>
+              <button
+                className={`mode-tab-btn ${activeTab === 'songbook' ? 'active' : ''}`}
+                onClick={() => {
+                  setActiveTab('songbook');
+                  if (labelsMode === 'none') setLabelsMode('notes');
+                }}
+              >
+                🎼 Synthesia Song Book (Tum Hi Ho)
+              </button>
+              <button
+                className={`mode-tab-btn ${activeTab === 'academy' ? 'active' : ''}`}
+                onClick={() => {
+                  setActiveTab('academy');
+                  if (labelsMode === 'none') setLabelsMode('notes');
+                }}
+              >
+                🎓 Piano Academy &amp; Lessons
+              </button>
+              <button
+                className={`mode-tab-btn ${activeTab === 'freeplay' ? 'active' : ''}`}
+                onClick={() => setActiveTab('freeplay')}
+              >
+                🎛️ Studio Synth &amp; MIDI
+              </button>
             </div>
-            <div className="guide-chip">
-              <kbd>W</kbd>, <kbd>E</kbd>, <kbd>T</kbd>, <kbd>Y</kbd>, <kbd>U</kbd>, <kbd>O</kbd> <span>Black Accidentals</span>
+          </header>
+
+          {/* Studio Controls Strip */}
+          <StudioControls
+            sustainPedal={sustainPedal}
+            onToggleSustain={handleToggleSustain}
+            preset={preset}
+            onPresetChange={handlePresetChange}
+            labelsMode={labelsMode}
+            onLabelsModeChange={setLabelsMode}
+            volume={volume}
+            onVolumeChange={handleVolumeChange}
+            isMidiConnected={isMidiConnected}
+          />
+
+          {/* Piano Grand Console Chassis */}
+          <main className="piano-console-chassis">
+            {/* Chassis Top Bar: Spectrum Visualizer & Metronome */}
+            <div className="console-hud-bar">
+              <div className="active-key-readout">
+                <span className="hud-label">ACTIVE RESONANCE:</span>
+                <span className="hud-value">
+                  {activePressedMidi.size > 0
+                    ? Array.from(activePressedMidi).map((m) => `MIDI ${m}`).join(', ')
+                    : 'Grand Soundboard Idle'}
+                </span>
+              </div>
+
+              <SoundVisualizer synth={synth} />
             </div>
-            <div className="guide-chip">
-              <kbd>SPACE</kbd> <span>Sustain Damper Pedal</span>
+
+            {/* Mode 1: Synthesia Falling Notes Screen */}
+            {activeTab === 'songbook' && (
+              <div className="synthesia-stage">
+                <FallingNotesCanvas
+                  song={activeSong}
+                  currentTimeMs={currentTimeMs}
+                  isPlaying={isPlaying}
+                  activeVisibleMidiRange={{
+                    startMidi: (startOctave + 1) * 12,
+                    endMidi: (startOctave + 1) * 12 + 35
+                  }}
+                  onSeekTime={handleSeekTime}
+                />
+
+                <SongPlayer
+                  activeSongIndex={activeSongIndex}
+                  onSelectSong={handleSelectSong}
+                  isPlaying={isPlaying}
+                  onTogglePlay={handleTogglePlaySong}
+                  onRestartSong={handleRestartSong}
+                  playbackSpeed={playbackSpeed}
+                  onChangePlaybackSpeed={setPlaybackSpeed}
+                  waitForKeyMode={waitForKeyMode}
+                  onToggleWaitForKey={() => setWaitForKeyMode(!waitForKeyMode)}
+                  currentTimeMs={currentTimeMs}
+                  currentLyric={currentLyric}
+                />
+              </div>
+            )}
+
+            {/* Interactive 3D Grand Piano Keyboard Bed */}
+            <PianoKeyboard
+              onStartNote={handleStartNote}
+              onStopNote={handleStopNote}
+              activePressedMidi={activePressedMidi}
+              startOctave={startOctave}
+              octaveCount={3}
+              showLabels={labelsMode}
+              onShiftOctave={setStartOctave}
+              isNormalMode={false}
+            />
+
+            {/* Mode 2: Piano Academy Interactive Lessons */}
+            {activeTab === 'academy' && (
+              <PianoAcademy
+                onPlayMidis={handlePlayMidis}
+                onHighlightMidis={handleHighlightMidis}
+              />
+            )}
+          </main>
+
+          {/* Footer Info */}
+          <footer className="piano-footer">
+            <div className="footer-guide-row">
+              <div className="guide-chip">
+                <kbd>A</kbd>&ndash;<kbd>L</kbd> <span>White Keys (C4 to D5)</span>
+              </div>
+              <div className="guide-chip">
+                <kbd>W</kbd>, <kbd>E</kbd>, <kbd>T</kbd>, <kbd>Y</kbd>, <kbd>U</kbd>, <kbd>O</kbd> <span>Black Accidentals</span>
+              </div>
+              <div className="guide-chip">
+                <kbd>SPACE</kbd> <span>Sustain Damper Pedal</span>
+              </div>
+              <div className="guide-chip">
+                <kbd>1</kbd>&ndash;<kbd>3</kbd> <span>Tone Presets</span>
+              </div>
             </div>
-            <div className="guide-chip">
-              <kbd>1</kbd>&ndash;<kbd>3</kbd> <span>Tone Presets</span>
-            </div>
-          </div>
-        </footer>
+          </footer>
+        </>
       )}
     </div>
   );
