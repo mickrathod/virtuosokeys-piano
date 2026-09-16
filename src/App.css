@@ -1370,3 +1370,96 @@ body {
   font-weight: 800;
   color: #f59e0b;
 }
+
+/* ==========================================================================
+   Normal Piano (Direct Clean Play) Mode Styles
+   ========================================================================== */
+.normal-piano-tab-btn {
+  background: linear-gradient(135deg, rgba(225, 29, 72, 0.2), rgba(244, 63, 94, 0.1));
+  border: 1px solid rgba(244, 63, 94, 0.4);
+  color: #fda4af;
+  font-weight: 800;
+  box-shadow: 0 0 15px rgba(225, 29, 72, 0.15);
+}
+
+.normal-piano-tab-btn.active {
+  background: linear-gradient(135deg, #e11d48, #be123c) !important;
+  color: #ffffff !important;
+  border-color: #f43f5e !important;
+  box-shadow: 0 4px 20px rgba(225, 29, 72, 0.45) !important;
+}
+
+.steinway-fallboard {
+  position: relative;
+  background: linear-gradient(180deg, #18110b 0%, #2b180d 50%, #150a04 100%);
+  border-bottom: 2px solid #573318;
+  box-shadow: inset 0 2px 4px rgba(255, 255, 255, 0.1), 0 4px 12px rgba(0, 0, 0, 0.6);
+  padding: 18px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px 12px 0 0;
+  overflow: hidden;
+}
+
+.wood-grain-overlay {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at center, rgba(217, 119, 6, 0.08) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.steinway-brass-emblem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  position: relative;
+  z-index: 1;
+}
+
+.emblem-lyre {
+  font-size: 20px;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.8));
+}
+
+.emblem-text {
+  font-family: 'Outfit', serif;
+  font-size: 19px;
+  font-weight: 800;
+  letter-spacing: 5px;
+  background: linear-gradient(180deg, #fef08a 0%, #ca8a04 50%, #854d0e 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
+}
+
+.emblem-sub {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  color: #a16207;
+  text-transform: uppercase;
+}
+
+.normal-mode-status {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 800;
+  color: #10b981;
+  letter-spacing: 0.5px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.acoustic-live-dot {
+  color: #10b981;
+  animation: pulse 1.5s infinite;
+}
+
+.normal-piano-chassis .piano-keys-bed {
+  border-top: 3px solid #000000;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
+}
+

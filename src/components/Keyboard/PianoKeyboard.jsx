@@ -8,7 +8,8 @@ export const PianoKeyboard = ({
   startOctave = 3, // starting octave for 3-octave view (e.g. 3 = C3 to B5)
   octaveCount = 3, // 3 octaves = 36 notes
   showLabels = 'notes', // 'notes', 'keys', 'sargam', 'none'
-  onShiftOctave
+  onShiftOctave,
+  isNormalMode = false
 }) => {
   const [isMouseDown, setIsMouseDown] = useState(false);
 
@@ -48,10 +49,22 @@ export const PianoKeyboard = ({
 
   return (
     <div
-      className="piano-keyboard-chassis"
+      className={`piano-keyboard-chassis ${isNormalMode ? 'normal-piano-chassis' : ''}`}
       onMouseUp={() => setIsMouseDown(false)}
       onMouseLeave={() => setIsMouseDown(false)}
     >
+      {/* Authentic Piano Fallboard Brass Plate for Normal Mode */}
+      {isNormalMode && (
+        <div className="steinway-fallboard">
+          <div className="wood-grain-overlay"></div>
+          <div className="steinway-brass-emblem">
+            <span className="emblem-lyre">⚜️</span>
+            <span className="emblem-text">STEINWAY &amp; SONS</span>
+            <span className="emblem-sub">GRAND CONCERT HARMONY</span>
+          </div>
+        </div>
+      )}
+
       {/* Octave Shift Strip */}
       <div className="keyboard-octave-bar">
         <div className="octave-controls-left">
@@ -76,9 +89,15 @@ export const PianoKeyboard = ({
           </button>
         </div>
 
-        <div className="keyboard-guide-tip">
-          <span>💡 Tip: Press keys <strong>A, S, D, F, G, H, J, K, L</strong> on your keyboard to play!</span>
-        </div>
+        {!isNormalMode ? (
+          <div className="keyboard-guide-tip">
+            <span>💡 Tip: Press keys <strong>A, S, D, F, G, H, J, K, L</strong> on your keyboard to play!</span>
+          </div>
+        ) : (
+          <div className="normal-mode-status">
+            <span className="acoustic-live-dot">●</span> PURE CONCERT PIANO (DIRECT PLAY)
+          </div>
+        )}
       </div>
 
       {/* Main Piano Bed */}

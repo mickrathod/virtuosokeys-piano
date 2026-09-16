@@ -267,14 +267,30 @@ export function App() {
         {/* View Mode Switcher */}
         <div className="view-mode-tabs">
           <button
-            className={`mode-tab-btn ${activeTab === 'songbook' ? 'active' : ''}`}
-            onClick={() => setActiveTab('songbook')}
+            className={`mode-tab-btn normal-piano-tab-btn ${activeTab === 'normal' ? 'active' : ''}`}
+            onClick={() => {
+              setActiveTab('normal');
+              setLabelsMode('none');
+              setIsPlaying(false);
+            }}
           >
-            🎼 Synthesia Song Book (Tum Hi Ho & Tum Mere Ho)
+            🎹 Normal Piano (Direct Play)
+          </button>
+          <button
+            className={`mode-tab-btn ${activeTab === 'songbook' ? 'active' : ''}`}
+            onClick={() => {
+              setActiveTab('songbook');
+              if (labelsMode === 'none') setLabelsMode('notes');
+            }}
+          >
+            🎼 Synthesia Song Book (Tum Hi Ho)
           </button>
           <button
             className={`mode-tab-btn ${activeTab === 'academy' ? 'active' : ''}`}
-            onClick={() => setActiveTab('academy')}
+            onClick={() => {
+              setActiveTab('academy');
+              if (labelsMode === 'none') setLabelsMode('notes');
+            }}
           >
             🎓 Piano Academy & Lessons
           </button>
@@ -282,7 +298,7 @@ export function App() {
             className={`mode-tab-btn ${activeTab === 'freeplay' ? 'active' : ''}`}
             onClick={() => setActiveTab('freeplay')}
           >
-            🎹 Free Concert Grand & MIDI
+            🎛️ Studio Synth & MIDI
           </button>
         </div>
       </header>
@@ -355,6 +371,7 @@ export function App() {
           octaveCount={3}
           showLabels={labelsMode}
           onShiftOctave={setStartOctave}
+          isNormalMode={activeTab === 'normal'}
         />
 
         {/* Mode 2: Piano Academy Interactive Lessons */}
@@ -366,20 +383,25 @@ export function App() {
         )}
       </main>
 
-      {/* Footer Info */}
-      <footer className="piano-footer">
-        <div className="footer-guide-row">
-          <div className="guide-chip">
-            <kbd>A</kbd>&ndash;<kbd>L</kbd> <span>White Keys (C4 to D5)</span>
+      {/* Footer Info (Hidden in clean Normal Piano mode for zero distraction) */}
+      {activeTab !== 'normal' && (
+        <footer className="piano-footer">
+          <div className="footer-guide-row">
+            <div className="guide-chip">
+              <kbd>A</kbd>&ndash;<kbd>L</kbd> <span>White Keys (C4 to D5)</span>
+            </div>
+            <div className="guide-chip">
+              <kbd>W</kbd>, <kbd>E</kbd>, <kbd>T</kbd>, <kbd>Y</kbd>, <kbd>U</kbd>, <kbd>O</kbd> <span>Black Accidentals</span>
+            </div>
+            <div className="guide-chip">
+              <kbd>SPACE</kbd> <span>Sustain Damper Pedal</span>
+            </div>
+            <div className="guide-chip">
+              <kbd>1</kbd>&ndash;<kbd>3</kbd> <span>Tone Presets</span>
+            </div>
           </div>
-          <div className="guide-chip">
-            <kbd>W</kbd>, <kbd>E</kbd>, <kbd>T</kbd>, <kbd>Y</kbd>, <kbd>U</kbd>, <kbd>O</kbd> <span>Black Accidentals</span>
-          </div>
-          <div className="guide-chip">
-            <kbd>SPACE</kbd> <span>Sustain Damper Pedal</span>
-          </div>
-        </div>
-      </footer>
+        </footer>
+      )}
     </div>
   );
 }
